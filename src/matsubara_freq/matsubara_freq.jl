@@ -11,25 +11,34 @@ struct MatsubaraFrequency{PT <: AbstractParticle} <: AbstractMatsubaraFrequency
     val :: Float64
     idx :: Int64  
 
+    # So physically val is the actual frequency comprised of T and idx == new
+    #   v = (2*n+1) * pi*T
+    #   ω = 2n * pi*T
+    # So essentiall instead of having something like .get_val() that constructs it from scratch every time we simply store it
+
+    # --- Constructors 
+    # General Constructor - from what I can tell meant almost like a private function since here we manually have to set the value
     function MatsubaraFrequency(
         T   :: Float64, 
         val :: Float64, 
         idx :: Int64,
             :: Type{PT}
-        )   :: MatsubaraFrequency{PT} where {PT <: AbstractParticle}
-        
+    ) :: MatsubaraFrequency{PT} where {PT <: AbstractParticle}
+    
         return new{PT}(T, val, idx)
     end 
 
+    # Fermionic Constructor
     function MatsubaraFrequency(
         T   :: Float64, 
         idx :: Int64, 
-            :: Type{Fermion}
+        :: Type{Fermion}
         )   :: MatsubaraFrequency{Fermion}
-
+        
         return new{Fermion}(T, pi * T * (2 * idx + 1), idx)
     end 
- 
+    
+    # Bosonic Constructor
     function MatsubaraFrequency(
         T   :: Float64, 
         idx :: Int64, 
@@ -40,6 +49,12 @@ struct MatsubaraFrequency{PT <: AbstractParticle} <: AbstractMatsubaraFrequency
     end 
 end 
 
+# So here we have more verbose function to get the stored fields of an MF. In Python I would have wrote 
+#   MatsubaraFrequency.get_T()
+#   MatsubaraFrequency.get_val()
+#   MatsubaraFrequency.get_idx()
+# But here they are pure functions I guess
+
 """
     function temperature(
         w :: MatsubaraFrequency
@@ -47,10 +62,7 @@ end
 
 Returns `w.T`
 """
-function temperature(
-    w :: MatsubaraFrequency
-    ) :: Float64
-
+function temperature(w :: MatsubaraFrequency) :: Float64
     return w.T 
 end 
 
@@ -84,10 +96,11 @@ end
 
 #----------------------------------------------------------------------------------------------#
 
+# --- Additions between FF, BF, FB, BB frequencies
 function Base.:+(
     w1 :: MatsubaraFrequency{Fermion}, 
     w2 :: MatsubaraFrequency{Fermion}
-    )  :: MatsubaraFrequency{Boson}
+)  :: MatsubaraFrequency{Boson}
 
     T = temperature(w1)
     @DEBUG temperature(w2) ≈ T "Temperatures must be equal for addition"
@@ -97,7 +110,7 @@ end
 function Base.:+(
     w1 :: MatsubaraFrequency{Boson}, 
     w2 :: MatsubaraFrequency{Boson}
-    )  :: MatsubaraFrequency{Boson}
+)  :: MatsubaraFrequency{Boson}
 
     T = temperature(w1)
     @DEBUG temperature(w2) ≈ T "Temperatures must be equal for addition"
@@ -107,7 +120,7 @@ end
 function Base.:+(
     w1 :: MatsubaraFrequency{Fermion}, 
     w2 :: MatsubaraFrequency{Boson}
-    )  :: MatsubaraFrequency{Fermion}
+)  :: MatsubaraFrequency{Fermion}
 
     T = temperature(w1)
     @DEBUG temperature(w2) ≈ T "Temperatures must be equal for addition"
@@ -117,17 +130,18 @@ end
 function Base.:+(
     w1 :: MatsubaraFrequency{Boson}, 
     w2 :: MatsubaraFrequency{Fermion}
-    )  :: MatsubaraFrequency{Fermion}
+)  :: MatsubaraFrequency{Fermion}
 
     T = temperature(w1)
     @DEBUG temperature(w2) ≈ T "Temperatures must be equal for addition"
     return MatsubaraFrequency(T, index(w1) + index(w2), Fermion)
 end
 
+# --- Subtraction between FF, BF, FB, BB frequencies
 function Base.:-(
     w1 :: MatsubaraFrequency{Fermion}, 
     w2 :: MatsubaraFrequency{Fermion}
-    )  :: MatsubaraFrequency{Boson}
+)  :: MatsubaraFrequency{Boson}
 
     T = temperature(w1)
     @DEBUG temperature(w2) ≈ T "Temperatures must be equal for subtraction"
@@ -137,7 +151,7 @@ end
 function Base.:-(
     w1 :: MatsubaraFrequency{Boson}, 
     w2 :: MatsubaraFrequency{Boson}
-    )  :: MatsubaraFrequency{Boson}
+)  :: MatsubaraFrequency{Boson}
 
     T = temperature(w1)
     @DEBUG temperature(w2) ≈ T "Temperatures must be equal for subtraction"
@@ -147,7 +161,7 @@ end
 function Base.:-(
     w1 :: MatsubaraFrequency{Fermion}, 
     w2 :: MatsubaraFrequency{Boson}
-    )  :: MatsubaraFrequency{Fermion}
+)  :: MatsubaraFrequency{Fermion}
 
     T = temperature(w1)
     @DEBUG temperature(w2) ≈ T "Temperatures must be equal for subtraction"
@@ -157,7 +171,7 @@ end
 function Base.:-(
     w1 :: MatsubaraFrequency{Boson}, 
     w2 :: MatsubaraFrequency{Fermion}
-    )  :: MatsubaraFrequency{Fermion}
+)  :: MatsubaraFrequency{Fermion}
 
     T = temperature(w1)
     @DEBUG temperature(w2) ≈ T "Temperatures must be equal for subtraction"
@@ -166,14 +180,14 @@ end
 
 function Base.:-(
     w :: MatsubaraFrequency{Fermion}, 
-    ) :: MatsubaraFrequency{Fermion}
+) :: MatsubaraFrequency{Fermion}
 
     return MatsubaraFrequency(temperature(w), -index(w) - 1, Fermion)
 end
 
 function Base.:-(
     w :: MatsubaraFrequency{Boson}, 
-    ) :: MatsubaraFrequency{Boson}
+) :: MatsubaraFrequency{Boson}
 
     return MatsubaraFrequency(temperature(w), -index(w), Boson)
 end
@@ -188,7 +202,8 @@ MatsubaraIndex type with fields:
 """
 struct MatsubaraIndex{PT <: AbstractParticle} <: AbstractMatsubaraFrequency
     idx :: Int64
-    
+
+    # Basic Constructor
     function MatsubaraIndex(
         idx :: Int64,
             :: Type{PT}
@@ -197,6 +212,7 @@ struct MatsubaraIndex{PT <: AbstractParticle} <: AbstractMatsubaraFrequency
         return new{PT}(idx)
     end
 
+    # Construtor to make a MatsubaraIndex from a MatsubaraFrequency
     function MatsubaraIndex(
         w :: MatsubaraFrequency{PT}
         ) :: MatsubaraIndex{PT} where {PT <: AbstractParticle}
@@ -205,6 +221,7 @@ struct MatsubaraIndex{PT <: AbstractParticle} <: AbstractMatsubaraFrequency
     end
 end
 
+# Constructor for MatsubaraFrequency to make one where instead of an int for index you pass in this MatsubaraIndex struct 
 function MatsubaraFrequency(
     T :: Float64, 
     x :: MatsubaraIndex{PT}
@@ -229,6 +246,7 @@ end
 
 #----------------------------------------------------------------------------------------------#
 
+# Operations for the MatsubaraIndex struct
 function Base.:+(
     w1 :: MatsubaraIndex{Fermion}, 
     w2 :: MatsubaraIndex{Fermion}
