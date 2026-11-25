@@ -6,12 +6,38 @@ MatsubaraFunction type with fields:
 * `shape  :: NTuple{SD, Int64}`                 : shape of tensor structure on every grid point
 * `offset :: NTuple{DD, Int64}`                 : offsets for data access
 * `data   :: OffsetArray{Q, DD, Array{Q, DD}}`  : multidimensional data array for which the axes correspond to Matsubara indices for the GD Matsubara grids
+
+The idea here is that a MatsubaraFunction acts kinda like a big lookup table.
+So for every possible combination of frequencies ( = Cartesian Product ) it stores some value.
+
+In the simplest case that value is a (complex) number:
+
+    f[ω1, ω2, ω3, ...] ->   1.2
+
+    However it can also store an object of higher dimensions
+
+    f[ω1, ω2, ω3, ...] ->   [1.2, 1.3] 
+    
+    f[ω1, ω2, ω3, ...] ->   [
+                                [1.2, 1.3],
+                                [1.4, 1.5]
+                            ] 
+
+    ...
+
+We can index elements of those objects directly after passing in all the frequencies:
+
+    Ω = CartesianIndex(ω1, ω2, ω3, ...)
+    
+    f[Ω, i, j, k, ...] ->   Element at frequencies ω1,ω2,ω3,... at indices i,j,k,... 
+
 """
 struct MatsubaraFunction{GD, SD, DD, Q <: Number}
     grids  :: NTuple{GD, AbstractMatsubaraGrid}
     shape  :: NTuple{SD, Int64}          
     offset :: NTuple{DD, Int64}          
     data   :: OffsetArray{Q, DD, Array{Q, DD}}
+
 
     function MatsubaraFunction(
         grids :: NTuple{GD, AbstractMatsubaraGrid}, 
@@ -81,7 +107,7 @@ struct MatsubaraFunction{GD, SD, DD, Q <: Number}
         grid   :: AbstractMatsubaraGrid
         ;
         data_t :: DataType = ComplexF64
-        )      :: MatsubaraFunction{1, 0, 1, data_t}
+        )      :: MatsubaraFunction{1, 0, 1, data_t}<
 
         return MatsubaraFunction((grid,); data_t)
     end

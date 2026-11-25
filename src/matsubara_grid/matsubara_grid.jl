@@ -9,6 +9,9 @@ struct MatsubaraGrid{PT <: AbstractParticle} <: AbstractMatsubaraGrid
     T    :: Float64 
     data :: OffsetVector{MatsubaraFrequency{PT}, Vector{MatsubaraFrequency{PT}}}
 
+    # We store an array/vector of these frequencies that then can be accessed by the actual index.
+    # So eg. if I want n = 3 (so v = 7πT ) I can write grid[3] and not have to worry about the indexing
+
     function MatsubaraGrid(
         T    :: Float64,
         data :: OffsetVector{MatsubaraFrequency{PT}, Vector{MatsubaraFrequency{PT}}},
@@ -21,15 +24,19 @@ struct MatsubaraGrid{PT <: AbstractParticle} <: AbstractMatsubaraGrid
         return new{PT}(T, data)
     end
 
+    # This creates the full grid of 2N fermionic matsubara frequencies at temperature T for a given number N
     function MatsubaraGrid(
         T :: Float64,
         N :: Int64,
-          :: Type{Fermion}
+        :: Type{Fermion}
         ) :: MatsubaraGrid{Fermion}
-
+        
         return MatsubaraGrid(T, OffsetVector([MatsubaraFrequency(T, n, Fermion) for n in -N : N - 1], -N - 1))
     end
-
+    
+    # This creates the full grid of 2N-1 bosonic matsubara frequencies at temperature T for a given number N
+    # I guess where for the fermionic case we create from 1 -> N and -1 -> -N here we so 2N the convention for bosonic frequencies is that for N we create 0, 1 -> N-1 and -1 -> -(N-1) so 2N-1
+    # I can already so the OBOE...
     function MatsubaraGrid(
         T :: Float64,
         N :: Int64,

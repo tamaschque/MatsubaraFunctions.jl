@@ -40,6 +40,7 @@ Return `op.con`
 """
 con(op :: MatsubaraOperation) :: Bool = op.con
 
+# Here Multiplication is to be interpreted as sequential execution of the operation
 function Base.:*(
     op1 :: MatsubaraOperation,
     op2 :: MatsubaraOperation
@@ -48,6 +49,7 @@ function Base.:*(
     return MatsubaraOperation(xor(sgn(op1), sgn(op2)), xor(con(op1), con(op2)))
 end
 
+# Execution of the operation on an object x
 function (op :: MatsubaraOperation)(
     x :: Q
     ) :: Q where {Q <: Number}

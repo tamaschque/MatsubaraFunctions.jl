@@ -54,6 +54,7 @@ end
 #----------------------------------------------------------------------------------------------#
 
 # returns index to data array corresponding to this frequency if in grid
+# Equivalent to __call__ so to be able to do grid(w)
 function (f :: AbstractMatsubaraGrid)(
     w :: AbstractMatsubaraFrequency
     ) :: Int64
